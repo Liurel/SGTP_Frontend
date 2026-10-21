@@ -32,6 +32,7 @@ export async function loginApi(email, password) {
   return {
     user: normalizedUser,
     mensaje: response.mensaje
+    token: response.token
   }
 }
 
