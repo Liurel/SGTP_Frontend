@@ -10,8 +10,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useAdmissionForm } from '../../hooks/useAdmissionForm'
 import { useTodayTickets } from '../../hooks/useTodayTickets'
 import './AdmisionScreen.css'
-
-import useWebSocket from '../../hooks/useWebSocket' // [NUEVO]
+import { useWebSocket } from '../../hooks/useWebSocket'
 
 function getTicketNumberKey(ticketNumber) {
   if (!ticketNumber) return ''
@@ -75,17 +74,16 @@ export default function AdmisionScreen() {
   const [issuedTicket, setIssuedTicket] = useState(null)
   const [showOcrModal, setShowOcrModal] = useState(false)
   const [admissionError, setAdmissionError] = useState('')
-  
-  // [NUEVO] Escuchar el canal de tickets para la lista de ingresos
-  useWebSocket('tickets', {
-    onMessage: useCallback((msg) => {
-      if (msg?.action === 'NEW_TICKET') {
-        // Alguien (o esta misma PC) emitió un ticket, refrescamos la lista
-        refreshTickets() 
-      }
-    }, [refreshTickets])
-  })
-  
+
+  // Implementación de WebSocket
+  const { lastMessage: wsTicketMessage } = useWebSocket('ws/tickets')
+
+  useEffect(() => {
+    if (wsTicketMessage && wsTicketMessage.event === 'TICKET_CREATED') {
+      refreshTickets()
+    }
+  }, [wsTicketMessage, refreshTickets])
+
   // Filtrado de tickets emitidos hoy delegado al hook
   const todayTickets = useTodayTickets(tickets)
   const formattedSequence = formData.numeroLlamado && formData.numeroLlamado.trim()
